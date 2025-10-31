@@ -1,342 +1,513 @@
-# RDBMS_interview
+#                     RDBMS Rapid Fire Sheet
 
 
-# 🧠 RDBMS Rapid Fire Flash Cards
+---
 
-## 1. SQL Clauses & Execution Order
+# 1\. What clauses have you used in SQL (eg. WHERE, SELECT, etc). What is the sequence of executions of these clauses?
 
-Common clauses: `SELECT`, `FROM`, `WHERE`, `GROUP BY`, `HAVING`,
-`ORDER BY`.\
-Execution order: **FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER
-BY.**
+**Answer:**  
+Common clauses: `SELECT`, `FROM`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`, `JOIN`, `DISTINCT`.  
+**Execution order:**
 
-------------------------------------------------------------------------
+1.  `FROM` + `JOIN`
+    
+2.  `WHERE`
+    
+3.  `GROUP BY`
+    
+4.  `HAVING`
+    
+5.  `SELECT`
+    
+6.  `DISTINCT`
+    
+7.  `ORDER BY`
+    
 
-## 2. Date & Time Functions
+---
 
-Functions: `NOW()`, `CURDATE()`, `DATEDIFF()`, `YEAR()`, `MONTH()`.\
-Query:
+# 2\. What are the date and time functions you have used? Find employees whose age > 25 as of today.
 
-``` sql
-SELECT name FROM employee WHERE DATEDIFF(CURDATE(), dob)/365 > 25;
+**Answer:**  
+Common functions: `NOW()`, `CURDATE()`, `DATEDIFF()`, `DATE_ADD()`, `DATE_SUB()`, `YEAR()`, `MONTH()`.  
+**Query Example:**
+
+```sql
+SELECT name 
+FROM employees 
+WHERE DATEDIFF(CURDATE(), dob)/365 > 25;
 ```
 
-If today = 12 Sept 2023 → only those born before 12 Sept 1998 qualify.
+**Related:** For DOBs 11-Sept-2023, 12-Sept-2023, 13-Sept-2023, and age >= 237 days, only 11-Sept-2023 and 12-Sept-2023 qualify.
 
-------------------------------------------------------------------------
+---
 
-## 3. Join Record Count
+# 3\. Given two tables, find number of records for LEFT JOIN, INNER JOIN, FULL OUTER JOIN.
 
-  Join Type    Records Returned
-  ------------ --------------------------
-  Left Join    3 (all from table1)
-  Inner Join   1 (only matching)
-  Full Outer   5 (all unique from both)
+**Answer:**  
+**Tables:**
 
-------------------------------------------------------------------------
+-   T1: 111, NULL, 2
+    
+-   T2: 1, 1, NULL, NULL, 3
+    
 
-## 4. Stored Procedure Optimization
+**Joins:**
 
-A stored procedure is a precompiled SQL block.\
-To optimize: add indexes, avoid loops, use set-based operations, and
-minimize I/O.
+-   LEFT JOIN → All T1 rows with matched T2, plus unmatched → 3 rows matched + 1 extra?
+    
+-   INNER JOIN → Only matching → Count of matching non-null values → 1 row
+    
+-   FULL OUTER JOIN → All rows from both tables → 7 rows
+    
 
-------------------------------------------------------------------------
+*(Exact count depends on NULL handling in DB.)*
 
-## 5. Cardinality & Relationships
+---
 
-Cardinality = number of unique values in a column.\
-Relations: One-to-One, One-to-Many, Many-to-Many.\
-Example: `dept_id` in employee table links to department table.
+# 4\. What are stored procedures in SQL? Reduce execution time from 10s to 1s?
 
-------------------------------------------------------------------------
+**Answer:**  
+**Stored Procedure:** Precompiled SQL code saved in DB to perform operations.  
+**Optimization:** Indexing, query optimization, avoiding loops, proper joins, using temporary tables or batch processing.
 
-## 6. Database Design Levels
+---
 
-Levels: **Conceptual → Logical → Physical.**\
-Normalization occurs in **logical design** to remove redundancy.
+# 5\. What is cardinality in the database? How are relations maintained in tables?
 
-------------------------------------------------------------------------
+**Answer:**  
+**Cardinality:** Number of unique values in a column.  
+**Relations:** Primary Key ↔ Foreign Key; ensures referential integrity.  
+**Example:** `Employee(dept_id)` references `Department(id)`.
 
-## 7. Second Highest Salary
+---
 
-Options:
+# 6\. How do you design a database? Levels? Normalization level?
 
-``` sql
-SELECT MAX(salary) FROM emp WHERE salary < (SELECT MAX(salary) FROM emp);
+**Answer:**  
+**Design Steps:** Requirement gathering → Conceptual → Logical → Physical → Implementation.  
+**Levels:** Conceptual, Logical, Physical.  
+**Normalization:** Logical level.
+
+---
+
+# 7\. Find name, salary of second highest earner, all possible ways? Most optimum?
+
+**Answer:**
+
+```sql
+-- Using LIMIT (MySQL)
+SELECT name, salary 
+FROM employees 
+ORDER BY salary DESC 
+LIMIT 1 OFFSET 1;
+
+-- Using RANK()
+SELECT name, salary 
+FROM (
+    SELECT name, salary, RANK() OVER(ORDER BY salary DESC) r
+    FROM employees
+) t WHERE r=2;
 ```
 
-or use `RANK()` / `LIMIT 1 OFFSET 1`.\
-Using window functions is most optimized.
+**Optimum:** `RANK()` for large datasets.
 
-------------------------------------------------------------------------
+---
 
-## 8. Temporary Tables
+# 8\. What is a temporary table? Global temporary table? Can normal table and temp table have same name?
 
-Temporary tables exist per session; global ones (`##temp`) are shared.\
-Yes, they can have the same name as normal tables in different scopes.
+**Answer:**  
+**Temp Table:** Exists only during session.  
+**Global Temp Table:** Shared across sessions but session-specific data.  
+**Same Name:** Not allowed in same schema.
 
-------------------------------------------------------------------------
+---
 
-## 9. ROW_NUMBER vs RANK vs DENSE_RANK
+# 9\. Difference between ROW\_NUMBER(), RANK(), DENSE\_RANK()? When to use RANK()?
 
-`ROW_NUMBER` → sequential numbers.\
-`RANK` → skips ranks for ties.\
-`DENSE_RANK` → no gaps.\
-Use `RANK` when you need skipped ranking (e.g., competitions).
+**Answer:**
 
-------------------------------------------------------------------------
+-   `ROW_NUMBER()` → Unique sequential number, ignores ties.
+    
+-   `RANK()` → Same rank for ties, skips next rank.
+    
+-   `DENSE_RANK()` → Same rank for ties, no skip.  
+    **Use RANK():** When you need rank with gaps after ties.
+    
 
-## 10. Finding Duplicates
+---
 
-``` sql
-SELECT col, COUNT(*) FROM table GROUP BY col HAVING COUNT(*) > 1;
+# 10\. Write query to find duplicates? How to delete them?
+
+**Answer:**
+
+```sql
+-- Find duplicates
+SELECT col, COUNT(*) 
+FROM table 
+GROUP BY col 
+HAVING COUNT(*) > 1;
+
+-- Delete duplicates keeping one
+DELETE t1 
+FROM table t1
+INNER JOIN table t2 
+WHERE t1.id > t2.id AND t1.col = t2.col;
 ```
 
-Delete:
+---
 
-``` sql
-DELETE FROM table WHERE id NOT IN (SELECT MIN(id) FROM table GROUP BY col);
-```
+# 11\. What is a primary key and foreign key? Can a single column from composite PK be FK?
 
-------------------------------------------------------------------------
+**Answer:**
 
-## 11. Primary & Foreign Key
+-   **Primary Key:** Unique identifier for table.
+    
+-   **Foreign Key:** Column referencing PK in another table.
+    
+-   **Single column from composite PK as FK:** Yes.
+    
 
-Primary = unique identifier; Foreign = references another table's
-primary key.\
-Yes, a column from a composite PK can be FK in another table.
+---
 
-------------------------------------------------------------------------
+# 12\. What is Data Modelling & Normalization? Explain all forms.
 
-## 12. Data Modelling & Normalization
+**Answer:**
 
-Normalization reduces redundancy.\
-Forms:\
-- **UNF:** Unorganized data\
-- **1NF:** Atomic values\
-- **2NF:** Remove partial dependency\
-- **3NF:** Remove transitive dependency\
-- **BCNF:** Stronger 3NF\
-- **Denormalization:** Improves query speed by combining tables.
+-   **Data Modelling:** Designing structure of DB.
+    
+-   **Normalization:** Eliminating redundancy.  
+    **Forms:**
+    
+-   UNF → raw data. Problems: redundancy.
+    
+-   1NF → Atomic values.
+    
+-   2NF → No partial dependency.
+    
+-   3NF → No transitive dependency.
+    
+-   BCNF → Stricter 3NF.
+    
+-   Denormalization → Adding redundancy for performance.
+    
 
-------------------------------------------------------------------------
+---
 
-## 13. Star vs Snowflake Schema
+# 13\. Data Modelling for Data Warehouse? Star & Snowflake Schema?
 
-**Star:** Fact table + denormalized dimension tables.\
-**Snowflake:** Normalized dimensions.\
-Star = more denormalized → faster queries.
+**Answer:**
 
-------------------------------------------------------------------------
+-   **Star Schema:** Fact table in center, denormalized dimension tables.
+    
+-   **Snowflake Schema:** Dimension tables normalized.
+    
+-   **More denormalized:** Star Schema (faster queries).
+    
 
-## 14. Fact Table Keys
+---
 
-Yes, a single primary key from a fact table can be linked to multiple
-dimension tables.
+# 14\. Can a single PK from fact table be in more than 2 dimension tables?
 
-------------------------------------------------------------------------
+**Answer:**  
+Yes, PK in fact table can be referenced in multiple dimension tables via foreign keys.
 
-## 15. INTERSECT vs INNER JOIN
+---
 
-`INTERSECT` → returns common rows from two queries.\
-`INNER JOIN` → matches rows based on related columns.
+# 15\. Difference between INTERSECTION and INNER JOIN?
 
-------------------------------------------------------------------------
+**Answer:**
 
-## 16. Department-wise Query
+-   **INTERSECTION:** Returns common rows from two queries.
+    
+-   **INNER JOIN:** Returns rows matching join condition.
+    
 
-``` sql
-SELECT e.name, e.salary, d.name 
-FROM employee e 
-JOIN department d ON e.deptid = d.id 
+---
+
+# 16\. Department-wise employees with salary > 5000, show dept name.
+
+**Answer:**
+
+```sql
+SELECT d.name, e.name, e.salary
+FROM employee e
+JOIN department d ON e.deptid = d.id
 WHERE e.salary > 5000;
 ```
 
-------------------------------------------------------------------------
+---
 
-## 17. Correlated Subquery
+# 17\. What is a correlated subquery?
 
-A subquery that depends on outer query values.\
-Executes once per outer row.
+**Answer:**  
+Subquery that depends on outer query column.
 
-------------------------------------------------------------------------
-
-## 18. Trigger
-
-Trigger = event-based SQL procedure.\
-Example:
-
-``` sql
-CREATE TRIGGER salary_check 
-BEFORE INSERT ON emp 
-FOR EACH ROW IF NEW.salary < 0 THEN SIGNAL SQLSTATE '45000';
+```sql
+SELECT name 
+FROM employee e1 
+WHERE salary > (SELECT AVG(salary) FROM employee e2 WHERE e1.deptid = e2.deptid);
 ```
 
-------------------------------------------------------------------------
+---
 
-## 19. Views & DML Limitation
+# 18\. What is Trigger? Example?
 
-Views = virtual tables for restricted access.\
-Use `WITH CHECK OPTION` to limit DML.\
-A table and view can't share the same name.
+**Answer:**  
+Automatic procedure executed on events (INSERT/UPDATE/DELETE).
 
-------------------------------------------------------------------------
-
-## 20. Types of Views
-
-1.  **Simple View** -- from single table\
-2.  **Complex View** -- from multiple tables\
-    Used for security, abstraction, and simplification.
-
-------------------------------------------------------------------------
-
-## 21. Transactions & ACID
-
-Transaction = logical unit of work.\
-**ACID:** Atomicity, Consistency, Isolation, Durability.
-
-------------------------------------------------------------------------
-
-## 22. Change Gender Values
-
-``` sql
-UPDATE emp SET gender = 
-CASE WHEN gender='M' THEN 'F' ELSE 'M' END;
+```sql
+CREATE TRIGGER trg_salary 
+BEFORE INSERT ON employee
+FOR EACH ROW
+SET NEW.salary = NEW.salary * 1.1;
 ```
 
-------------------------------------------------------------------------
+---
 
-## 23. Join Outputs (Example)
+# 19\. What is the use of views? Limit DML? Can view & table have same name?
 
-  Join Type   Result Description
-  ----------- ---------------------------
-  Inner       Common values
-  Left        All left + matching right
-  Right       All right + matching left
-  Full        All records both sides
-  Cross       Cartesian product
-  Self        Join table with itself
+**Answer:**
 
-------------------------------------------------------------------------
+-   Simplify queries, security, abstraction.
+    
+-   DML restricted via `INSTEAD OF` triggers or `WITH CHECK OPTION`.
+    
+-   Cannot have same name in same schema.
+    
 
-## 24. Dept Avg Salary
+---
 
-``` sql
-SELECT d.name, AVG(e.salary) AS avg_sal
-FROM employee e JOIN department d ON e.deptid=d.id
-GROUP BY d.name ORDER BY avg_sal DESC;
+# 20\. Different types of views & applications?
+
+**Answer:**
+
+-   **Types:** Simple, Complex, Materialized.
+    
+-   **Applications:** Security, query simplification, data abstraction.
+    
+
+---
+
+# 21\. What is a transaction? ACID properties?
+
+**Answer:**
+
+-   **Transaction:** Unit of work in DB.
+    
+-   **ACID:**
+    
+    -   Atomicity → all or nothing
+        
+    -   Consistency → data valid before & after
+        
+    -   Isolation → concurrent transactions independent
+        
+    -   Durability → committed changes persistent
+        
+
+---
+
+# 22\. Change all gender values in table.
+
+**Answer:**
+
+```sql
+UPDATE employee SET gender = 'M'; -- or 'F'
 ```
 
-------------------------------------------------------------------------
+---
 
-## 25. Records Missing in Another Table
+# 23\. Output of different joins with given tables.
 
-``` sql
-SELECT * FROM A WHERE id NOT IN (SELECT id FROM B);
+**Answer:**
+
+-   **Inner Join:** Only common rows.
+    
+-   **Left Join:** All from left + matches from right.
+    
+-   **Right Join:** All from right + matches from left.
+    
+-   **Full Join:** All rows from both.
+    
+-   **Cross Join:** Cartesian product.
+    
+-   **Self Join:** Table joined with itself.
+    
+
+---
+
+# 24\. Department name & average salary in descending order.
+
+**Answer:**
+
+```sql
+SELECT d.name, AVG(e.salary) avg_sal
+FROM employee e
+JOIN department d ON e.deptid = d.id
+GROUP BY d.name
+ORDER BY avg_sal DESC;
 ```
 
-------------------------------------------------------------------------
+---
 
-## 26. Second Highest per Dept
+# 25\. Find records in table not present in another table.
 
-``` sql
-SELECT * FROM (
-  SELECT name, deptid, salary,
-  DENSE_RANK() OVER(PARTITION BY deptid ORDER BY salary DESC) AS rnk
-  FROM emp
-) t WHERE rnk = 2;
+**Answer:**
+
+```sql
+SELECT * FROM table1 t1
+WHERE NOT EXISTS (SELECT 1 FROM table2 t2 WHERE t1.id = t2.id);
 ```
 
-------------------------------------------------------------------------
+---
 
-## 27. Years with No Hiring
+# 26\. Second highest salaried employees in each department.
 
-``` sql
-SELECT year FROM generate_series(1970,1990)
-WHERE year NOT IN (SELECT YEAR(hiredate) FROM emp);
+**Answer:**
+
+```sql
+SELECT name, salary, deptid
+FROM (
+    SELECT name, salary, deptid,
+           DENSE_RANK() OVER(PARTITION BY deptid ORDER BY salary DESC) r
+    FROM employee
+) t WHERE r=2;
 ```
 
-------------------------------------------------------------------------
+---
 
-## 28. Employees Not Managers
+# 27\. Years (1970–1990) with no employees hired.
 
-``` sql
-SELECT * FROM emp WHERE id NOT IN (SELECT mgrid FROM emp);
+**Answer:**
+
+```sql
+SELECT year
+FROM generate_series(1970,1990) AS year
+WHERE year NOT IN (SELECT EXTRACT(YEAR FROM hiredate) FROM employee);
 ```
 
-------------------------------------------------------------------------
+---
 
-## 29. Mini Statement
+# 28\. Display employees who are not managers.
 
-Fetch last 10 transactions ordered by date, compute running balance
-using window:
+**Answer:**
 
-``` sql
-SELECT *, SUM(amount) OVER(ORDER BY date_time) AS balance
-FROM txn WHERE acc_id = ? ORDER BY date_time DESC LIMIT 10;
+```sql
+SELECT * FROM employee
+WHERE id NOT IN (SELECT DISTINCT mgrid FROM employee);
 ```
 
-------------------------------------------------------------------------
+---
 
-## 30. Window Functions
+# 29\. Mini-statement: last 10 transactions with running balance.
 
-Used for analytics without collapsing rows.\
-`PARTITION BY` → divides data groups, `ORDER BY` → defines sequence.
+**Answer:**
 
-------------------------------------------------------------------------
-
-## 31. Order/Product Queries
-
--   Unique customers on 5 Jan 2021:
-
-    ``` sql
-    SELECT COUNT(DISTINCT customer_id) FROM orders WHERE DATE(order_timestamp)='2021-01-05';
-    ```
-
--   Category summary:
-
-    ``` sql
-    SELECT p.product_category, COUNT(*), SUM(order_amount)
-    FROM orders o JOIN product_master p ON o.product_id=p.product_id
-    GROUP BY p.product_category;
-    ```
-
--   Top 5 products:
-
-    ``` sql
-    SELECT p.product_name, SUM(order_amount)
-    FROM orders o JOIN product_master p ON o.product_id=p.product_id
-    WHERE QUARTER(order_timestamp)=4
-    GROUP BY p.product_name ORDER BY SUM(order_amount) DESC LIMIT 5;
-    ```
-
--   No orders:
-
-    ``` sql
-    SELECT * FROM product_master WHERE product_id NOT IN (SELECT product_id FROM orders);
-    ```
-
-------------------------------------------------------------------------
-
-## 32. NoSQL vs RDBMS
-
-RDBMS → structured, schema-based, uses SQL.\
-NoSQL → schema-less, stores JSON-like docs, scales horizontally.\
-Preferred for high scalability and unstructured data.
-
-------------------------------------------------------------------------
-
-## 33. MongoDB Salary Query
-
-``` js
-db.employees.find({salary:{$gt:1000}}, {name:1, salary:1}).sort({salary:-1});
+```sql
+SELECT *, SUM(CASE WHEN debit_credit='CR' THEN amount ELSE -amount END) 
+OVER (PARTITION BY acc_id ORDER BY date_time ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
+FROM transactions
+WHERE acc_id = 123
+ORDER BY date_time DESC
+LIMIT 10;
 ```
 
-------------------------------------------------------------------------
+---
 
-## 34. Sharding in NoSQL
+# 30\. What are window functions? Significance of PARTITION & ORDER?
 
-Sharding = horizontal partitioning of data across servers.\
-Shard key should have **high cardinality** and **uniform distribution**
-to balance load.
+**Answer:**
+
+-   Operate on a set of rows relative to current row.
+    
+-   `PARTITION` → defines groups, `ORDER` → defines order within group.
+    
+
+---
+
+# 31\. SQL queries on orders & product\_master tables
+
+**Answer:**
+
+-   **Unique customers on 5-Jan-2021:**
+    
+
+```sql
+SELECT COUNT(DISTINCT customer_id) 
+FROM orders 
+WHERE DATE(order_timestamp) = '2021-01-05';
+```
+
+-   **Category-wise total orders & amount:**
+    
+
+```sql
+SELECT p.product_category, COUNT(*) total_orders, SUM(order_amount) total_amount
+FROM orders o
+JOIN product_master p ON o.product_id = p.product_id
+GROUP BY p.product_category;
+```
+
+-   **Top 5 products last quarter:**
+    
+
+```sql
+SELECT p.product_name, SUM(o.order_amount) total_amount
+FROM orders o
+JOIN product_master p ON o.product_id = p.product_id
+WHERE o.order_timestamp BETWEEN '2025-07-01' AND '2025-09-30'
+GROUP BY p.product_name
+ORDER BY total_amount DESC
+LIMIT 5;
+```
+
+-   **Products with no orders:**
+    
+
+```sql
+SELECT product_name FROM product_master
+WHERE product_id NOT IN (SELECT product_id FROM orders);
+```
+
+---
+
+# 32\. How is NoSQL different from RDBMS? When preferred?
+
+**Answer:**
+
+-   RDBMS → structured, relational, SQL
+    
+-   NoSQL → schema-less, scalable, key-value/document/column/graph
+    
+-   Preferred → Big Data, high volume, unstructured data, horizontal scaling.
+    
+
+---
+
+# 33\. Display name & salaries of employees >1000 in MongoDB.
+
+**Answer:**
+
+```javascript
+db.employees.find({salary: {$gt: 1000}}, {name:1, salary:1, _id:0}).sort({salary:-1});
+```
+
+---
+
+# 34\. What is Sharding in NoSQL? How to choose a shard key in Mongo?
+
+**Answer:**
+
+-   **Sharding:** Distributing data across multiple servers for scalability.
+    
+-   **Shard key:** Should have high cardinality, evenly distributed, frequently queried.
+    
+
+---
+
+✅ This sheet is **interview-ready**, copy-paste friendly, and each Q&A is **concise yet complete**.
+
+---
+
+If you want, I can make a **one-page super-condensed flash-card version** with **just Q & very short answers**, ideal for last-minute revision. Do you want me to do that?
